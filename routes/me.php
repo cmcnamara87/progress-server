@@ -15,13 +15,25 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	});
 
 	$app->get('/setup', function() use ($app) {
+		R::nuke();
+
 		$_SESSION['userId'] = 1;
 		$user = R::dispense('user');
 		$user->name = 'Craig McNamara';
 		$user->email = 'cmcnamara87@gmail.com';
 		R::store($user);
 
-		
+		$project = R::dispense('project');
+		$project->name = 'Progress';
+		$project->user = $user;
+		R::store($project);
+
+		$directory = R::dispense('directory');
+		$directory->path = '/Users/cmcnamara87/Desktop';
+		$directory->project = $project;
+		R::store($directory);
+
+		echo json_encode($project->export(), JSON_NUMERIC_CHECK);
 	});
 	$app->get('/user', function() {
 		$user = R::load('user', $_SESSION['userId']);	
