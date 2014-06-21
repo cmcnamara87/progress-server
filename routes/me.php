@@ -41,7 +41,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	});
 	$app->get('/projects', function() {
 		$user = R::load('user', $_SESSION['userId']);
-		$projects = $user->ownProjects;
+		$projects = $user->ownProjectList;
 		echo json_encode(R::exportAll($projects), JSON_NUMERIC_CHECK);
 	});
 	$app->post('/projects', function() use ($app) {
