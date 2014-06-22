@@ -74,9 +74,10 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	});
 	$app->post('/projects', function() use ($app) {
 		$project = R::dispense('project');
-	    $project->import(json_decode($app->request->getBody()));
+	    $project->import($app->request->post());
 	    $project->user = R::load('user', $_SESSION['userId']);
 	    R::store($project);
+	    echo json_encode($project->export(), JSON_NUMERIC_CHECK);
 	});
 	$app->post('/projects/:projectId/directories', function($projectId) use ($app) {
 		// print_r($app->request-/>post());
