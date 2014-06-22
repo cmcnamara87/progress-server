@@ -5,6 +5,8 @@ define('PING_TIMEOUT_MINUTES', 30);
 define('PING_PUSH_TIMEOUT_MINUTES', 1);
 define('LOCATION_TIMEOUT_MINUTES', 5);
 
+$_SESSION['userId'] = 1;
+
 // Restricted to logged in current user
 $app->group('/me', $authenticate($app), function () use ($app) {
 // $app->group('/me', function () use ($app) {
@@ -42,7 +44,33 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	$app->get('/projects', function() {
 		$user = R::load('user', $_SESSION['userId']);
 		$projects = $user->ownProjectList;
-		echo json_encode(R::exportAll($projects), JSON_NUMERIC_CHECK);
+		foreach($projects as $project) {
+			$time = 0;
+			$previousTime = null;
+			foreach($project->ownProgressList as $progress) {
+				$fiveMinAgo = $progress->created - (5 * 60);
+				if($previousTime && ($progress->created - $previousTime) < (5 * 60)) {
+					continue;
+				}
+				$previousTime = $progress->created;
+				$time += 5;
+			}
+			$project->time = $time;
+			
+
+			// echo json_encode($project->export(), JSON_NUMERIC_CHECK);
+			// die();
+		}
+		$export = array_map(function($project) {
+			$result = new stdClass();
+			$result->id = $project->id;
+			$result->name = $project->name;
+			$result->time = $project->time;
+			$result->directories = R::exportAll($project->ownDirectoryList);
+			return $result;
+		}, $projects);
+
+		echo json_encode(array_values($export), JSON_NUMERIC_CHECK);
 	});
 	$app->post('/projects', function() use ($app) {
 		$project = R::dispense('project');
@@ -51,14 +79,16 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	    R::store($project);
 	});
 	$app->post('/projects/:projectId/directories', function($projectId) use ($app) {
+		// print_r($app->request-/>post());
 		$directory = R::dispense('directory');
-	    $directory->import(json_decode($app->request->getBody()));
+	    $directory->import($app->request->post());
 	    $directory->project = R::load('project', $projectId);
 	    R::store($directory);
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
 		$progress = R::dispense('progress');
-	    $progress->import(json_decode($app->request->getBody()));
+		$progress->created = time();
+	    $progress->import($app->request->post());
 	    $progress->project = R::load('project', $projectId);
 	    R::store($progress);
 	});
