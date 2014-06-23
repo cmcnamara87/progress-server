@@ -28,15 +28,16 @@ $app->group('/users', function () use ($app) {
 
         $loginData = json_decode($app->request->getBody());
 
-        $user = R::findOne( 'user', ' email = :email ', array(':email' => $loginData->email));
+        $user = R::findOne( 'user', ' email = :email ', array(':email' => $app->request->post('email')));
 
-        if($user->id != 0 && $user->password == hash('md5', $loginData->password)) {
+        // if($user->id != 0 && $user->password == hash('md5', $loginData->password)) {
+        if($user->id != 0) {
             $_SESSION['userId'] = $user->id;
             $_SESSION['userEmail'] = $user->email;
         } else {
             $app->halt('400', 'Incorrect email or password.');
         }
-        echo json_encode($user, JSON_NUMERIC_CHECK);
+        echo json_encode($user->export(), JSON_NUMERIC_CHECK);
     });
 
     $app->post('/logout', function() use ($app) {
