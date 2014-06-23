@@ -5,7 +5,7 @@ define('PING_TIMEOUT_MINUTES', 30);
 define('PING_PUSH_TIMEOUT_MINUTES', 1);
 define('LOCATION_TIMEOUT_MINUTES', 5);
 
-$_SESSION['userId'] = 1;
+// $_SESSION['userId'] = 1;
 
 // Restricted to logged in current user
 $app->group('/me', $authenticate($app), function () use ($app) {
@@ -19,7 +19,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	$app->get('/setup', function() use ($app) {
 		R::nuke();
 
-		$_SESSION['userId'] = 1;
+		// $_SESSION['userId'] = 1;
 		$user = R::dispense('user');
 		$user->name = 'Craig McNamara';
 		$user->email = 'cmcnamara87@gmail.com';
@@ -31,7 +31,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		R::store($project);
 
 		$directory = R::dispense('directory');
-		$directory->path = '/Users/cmcnamara87/Desktop';
+		$directory->path = '/Users/cmcnamara87/Sites/progress';
 		$directory->project = $project;
 		R::store($directory);
 
