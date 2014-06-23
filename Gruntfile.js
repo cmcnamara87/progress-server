@@ -46,7 +46,7 @@ module.exports = function(grunt) {
             prod: {
                 options: {
                     src: '.',
-                    dest: 'ec2-user@amazon:/var/www/html/eta/api',
+                    dest: 'ec2-user@amazon:/var/www/html/progress/api',
                     ssh: true,
                     rescursive: true,
                     // syncDestIgnoreExcl: true,
