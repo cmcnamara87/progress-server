@@ -3,7 +3,9 @@ date_default_timezone_set("Australia/Brisbane");
 define('PING_NEARBY_DISTANCE_METERS', 500);
 define('PING_TIMEOUT_MINUTES', 30);
 define('PING_PUSH_TIMEOUT_MINUTES', 1);
-define('LOCATION_TIMEOUT_MINUTES', 5);
+define('TUITION_PING_TIME_MINUTES', 15);
+define('PROGRESS_MAX_AMOUNT_MINUTES', 15);
+define('PROGRESS_DEFAULT_AMOUNT_MINUTES', 5);
 
 // $_SESSION['userId'] = 1;
 
@@ -14,6 +16,11 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		// print_r($_SESSION);
 		// die();
 		echo '{"hello": "world"}';
+		// $projectId = 1;
+		 // else {
+	    	// echo 'already done';
+	    // }
+
 	});
 
 	$app->get('/setup', function() use ($app) {
@@ -45,12 +52,17 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		$user = R::load('user', $_SESSION['userId']);
 		$projects = $user->ownProjectList;
 		foreach($projects as $project) {
-			// $time = 0;
 			$previousTime = null;
 			$project->seconds = 0;
 			foreach($project->ownProgressList as $progress) {
+				$hasAlreadyMadeProgress = isset($previousTime);
 				if($previousTime) {
-					$project->seconds += min($progress->created - $previousTime, 5 * 60);
+					$hasWorkedWithinAnHour = $previousTime > ($progress->created - 60 * 60);
+					if($hasWorkedWithinAnHour) {
+						$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+					} else {
+						$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+					}
 				}
 				$previousTime = $progress->created;
 			}
@@ -83,10 +95,47 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	    R::store($directory);
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
+	    $project = R::load('project', $projectId);
+
+		// Code for tuition integration
+	    $tuition = R::findOne('tuition', ' project_id = :project_id ORDER BY created DESC ', array(':project_id' => $projectId));
+
+	    if($tuition) {
+	    	$too_old = $tuition->created < (time() - (60 * TUITION_PING_TIME_MINUTES));
+	    }
+	    if(!$tuition || $too_old) {
+			// Send progress starting
+	    	// http://tuition.jonnylu.com/api_php/?t_p=[1,0]&t_m=[EMAIL_HERE]
+	    	// Set the POST data
+	    	$user = R::load('user', $_SESSION['userId']);
+			$postdata = http_build_query(array());
+		 
+			// Set the POST options
+			$opts = array('http' => 
+				array (
+					'method' => 'POST',
+					'header' => 'Content-type: application/xwww-form-urlencoded',
+					'content' => $postdata
+				)
+			);
+		 
+			// Create the POST context
+			$context  = stream_context_create($opts);
+		 
+			// POST the data to an api
+			$url = "http://tuition.jonnylu.com/api_php/?t_p=1&t_m={$user->email}";
+			$result = file_get_contents($url, false, $context);
+
+			$tuition = R::dispense('tuition');
+			$tuition->created = time();
+			$tuition->project = $project;
+			R::store($tuition);
+	    }
+	   
 		$progress = R::dispense('progress');
 		$progress->created = time();
 	    $progress->import($app->request->post());
-	    $progress->project = R::load('project', $projectId);
+	    $progress->project = $project;
 	    R::store($progress);
 	});
 
