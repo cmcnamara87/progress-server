@@ -31,7 +31,7 @@ $app->group('/users', function () use ($app) {
         $user = R::findOne( 'user', ' email = :email ', array(':email' => $app->request->post('email')));
 
         // if($user->id != 0 && $user->password == hash('md5', $loginData->password)) {
-        if($user->id != 0) {
+        if($user && $user->id != 0) {
             $_SESSION['userId'] = $user->id;
             $_SESSION['userEmail'] = $user->email;
         } else {

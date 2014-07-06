@@ -1,11 +1,11 @@
 <?php
 date_default_timezone_set("Australia/Brisbane");
-define('PING_NEARBY_DISTANCE_METERS', 500);
-define('PING_TIMEOUT_MINUTES', 30);
-define('PING_PUSH_TIMEOUT_MINUTES', 1);
 define('TUITION_PING_TIME_MINUTES', 15);
-define('PROGRESS_MAX_AMOUNT_MINUTES', 15);
+define('PROGRESS_ACTIVE_TIME_MINUTES', 90);
+define('PROGRESS_MAX_AMOUNT_MINUTES', 20);
 define('PROGRESS_DEFAULT_AMOUNT_MINUTES', 5);
+
+
 
 // $_SESSION['userId'] = 1;
 
@@ -57,7 +57,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 			foreach($project->ownProgressList as $progress) {
 				$hasAlreadyMadeProgress = isset($previousTime);
 				if($previousTime) {
-					$hasWorkedWithinAnHour = $previousTime > ($progress->created - 60 * 60);
+					$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
 					if($hasWorkedWithinAnHour) {
 						$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
 					} else {
@@ -97,6 +97,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
 	    $project = R::load('project', $projectId);
 
+/*
 		// Code for tuition integration
 	    $tuition = R::findOne('tuition', ' project_id = :project_id ORDER BY created DESC ', array(':project_id' => $projectId));
 
@@ -132,7 +133,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 			$tuition->project = $project;
 			R::store($tuition);
 	    }
-	   
+	   */
 		$progress = R::dispense('progress');
 		$progress->created = time();
 	    $progress->import($app->request->post());
