@@ -4,8 +4,11 @@ require 'rb.phar';
 // header('Content-type: application/json');
 
 $app = new \Slim\Slim(array(
-    'debug' => true
+    'debug' => true,
+    'log.enable' => true,
+    'log.level' => \Slim\Log::DEBUG
 ));
+
 $app->contentType("application/json");
 
 // require 'push/push.php';

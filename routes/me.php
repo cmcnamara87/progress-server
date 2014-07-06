@@ -95,6 +95,8 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	    R::store($directory);
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
+		$app->log->debug(date('l jS \of F Y h:i:s A') . " - Progress for User ID: " . $_SESSION['userId'] . ", Project: $projectId");
+
 	    $project = R::load('project', $projectId);
 
 /*
