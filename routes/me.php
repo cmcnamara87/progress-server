@@ -1,10 +1,5 @@
 <?php
 date_default_timezone_set("Australia/Brisbane");
-define('TUITION_PING_TIME_MINUTES', 15);
-define('PROGRESS_ACTIVE_TIME_MINUTES', 90);
-define('PROGRESS_MAX_AMOUNT_MINUTES', 20);
-define('PROGRESS_DEFAULT_AMOUNT_MINUTES', 5);
-
 
 
 // $_SESSION['userId'] = 1;
@@ -95,11 +90,12 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	    R::store($directory);
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
-		$app->log->debug(date('l jS \of F Y h:i:s A') . " - Progress for User ID: " . $_SESSION['userId'] . ", Project: $projectId");
 
+		// Debug logging
 	    $project = R::load('project', $projectId);
+		$user = R::load('user', $_SESSION['userId']);	
+		$app->log->debug(date('l jS \of F Y h:i:s A') . " - Progress for User ID: " . $_SESSION['userId'] . " {$user->name}, Project: $projectId {$project->name}");
 
-/*
 		// Code for tuition integration
 	    $tuition = R::findOne('tuition', ' project_id = :project_id ORDER BY created DESC ', array(':project_id' => $projectId));
 
@@ -129,17 +125,35 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 			$url = "http://tuition.jonnylu.com/api_php/?t_p=1&t_m={$user->email}&t_f=desktopApp";
 			$result = file_get_contents($url, false, $context);
 
-
 			$tuition = R::dispense('tuition');
 			$tuition->created = time();
 			$tuition->project = $project;
 			R::store($tuition);
 	    }
-	   */
+	   
+	   	$lastProgress = R::findOne('progress', ' project_id = :project_id ORDER BY created DESC ', array(':project_id' => $projectId));
+	   	$firstPost = R::findOne('post', ' project_id = :project_id AND user_id = :user_id ', array(':project_id' => $projectId, ':user_id' => $user->id));
+
+	   	$hasNoPostForProject = !$firstPost; // can remove this if people stop working
+	   	$hasRecentlyStartedWorking = $lastProgress && $lastProgress->created + 60 * 60 < time();
+	   	if($hasNoPostForProject || $hasRecentlyStartedWorking) {
+	   		$app->log->debug(date('l jS \of F Y h:i:s A') . " - Making Post for User ID: " . $_SESSION['userId'] . " {$user->name}, Project: $projectId {$project->name}");
+
+	   		$post = R::dispense('post');
+	   		$post->user = $user;
+	   		$post->project = $project;
+	   		$post->type = 'STARTED_WORKING';
+	   		$post->created = time();
+	   		$post->modified = time();
+	   		R::store($post);
+	   	}
+
 		$progress = R::dispense('progress');
 		$progress->created = time();
+		$progress->modified = time();
 	    $progress->import($app->request->post());
 	    $progress->project = $project;
+	    $progress->user = $user;
 	    R::store($progress);
 	});
 

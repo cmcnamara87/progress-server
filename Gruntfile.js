@@ -29,28 +29,12 @@ module.exports = function(grunt) {
                 exclude: ['.git*', '*.scss', 'node_modules'],
                 recursive: true
             },
-            // dist: {
-            //     options: {
-            //         src: './',
-            //         dest: '../dist'
-            //     }
-            // },
-            // stage: {
-            //     options: {
-            //         src: '../dist/',
-            //         dest: '/var/www/site',
-            //         host: 'user@staging-host',
-            //         syncDestIgnoreExcl: true
-            //     }
-            // },
             prod: {
                 options: {
                     src: '.',
                     dest: 'ec2-user@amazon:/var/www/html/progress/api',
                     ssh: true,
                     rescursive: true,
-                    // syncDestIgnoreExcl: true,
-                    // compareMode: 'checksum'
                 }
             }
         },

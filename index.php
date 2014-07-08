@@ -3,6 +3,12 @@ require 'vendor/autoload.php';
 require 'rb.phar';
 // header('Content-type: application/json');
 
+define('TUITION_PING_TIME_MINUTES', 15);
+define('PROGRESS_ACTIVE_TIME_MINUTES', 90);
+define('PROGRESS_MAX_AMOUNT_MINUTES', 20);
+define('PROGRESS_DEFAULT_AMOUNT_MINUTES', 5);
+
+
 $app = new \Slim\Slim(array(
     'debug' => true,
     'log.enable' => true,
