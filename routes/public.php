@@ -26,6 +26,8 @@ $app->get('/me/following/posts', function() {
 	foreach($posts as &$post) {
 		$post->user = R::load('user', $post->user_id);
 		$post->project = R::load('project', $post->project_id);
+		$post->collection = R::load('collection', $post->collection_id);
+		$post->collection->ownFileList;
 	}
 	echo json_encode(R::exportAll($posts));
 });
@@ -128,6 +130,8 @@ $app->get('/users/:userId/projects/:projectId/posts', function($userId, $project
 	foreach($posts as &$post) {
 		$post->user = R::load('user', $post->user_id);
 		$post->project = R::load('project', $post->project_id);
+		$post->collection = R::load('collection', $post->collection_id);
+		$post->collection->ownFileList;
 	}
 	echo json_encode(R::exportAll($posts));
 });
