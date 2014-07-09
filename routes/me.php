@@ -18,6 +18,8 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 
 	});
 
+	
+
 	$app->get('/setup', function() use ($app) {
 		R::nuke();
 
@@ -88,6 +90,53 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	    $directory->import($app->request->post());
 	    $directory->project = R::load('project', $projectId);
 	    R::store($directory);
+	});
+	$app->get('/projects/:projectId/screenshots', function ($projectId) {
+		echo 'got screenshots!';
+	});
+	$app->post('/projects/:projectId/screenshots', function ($projectId) use ($app) {
+	    if (!isset($_FILES['file'])) {
+	        echo "No file uploaded!!";
+	        return;
+	    }
+
+	    $user = R::load('user', $_SESSION['userId']);
+	    $project = R::load('project', $projectId);
+
+	    $uploaddir = "/var/www/html/progress/uploads/";
+		$uploadfile = $uploaddir . basename($_FILES['file']['name']);
+
+		// echo '<pre>';
+		if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
+			$app->halt(400, 'Possible file upload attack');
+		}
+
+		// File upload success
+		$collection = R::dispense('collection');
+		$collection->user = $user;
+		$collection->project = $project;
+		R::store($collection);
+
+		$file = R::dispense('file');
+		$file->name = basename($_FILES['file']['name']);
+		$file->user = $user;
+		$file->project = $project;
+		$file->collection = $collection;
+		R::store($file);
+
+		$collection = R::load('collection', $collection->id);
+
+		$post = R::dispense('post');
+   		$post->user = $user;
+   		$post->project = $project;
+   		$post->type = 'SCREENSHOT_COLLECTION';
+   		$post->collection = $collection;
+   		$post->created = time();
+   		$post->modified = time();
+   		$post->text = $app->request->post('text');
+   		R::store($post);
+
+		echo json_encode($collection->export(false, false, true), JSON_NUMERIC_CHECK);
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
 
