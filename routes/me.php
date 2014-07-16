@@ -172,12 +172,14 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		 
 			// POST the data to an api
 			$url = "http://tuition.jonnylu.com/api_php/?t_p=1&t_m={$user->email}&t_f=desktopApp";
-			$result = file_get_contents($url, false, $context);
-
-			$tuition = R::dispense('tuition');
-			$tuition->created = time();
-			$tuition->project = $project;
-			R::store($tuition);
+			$result = @file_get_contents($url, false, $context);
+	
+			if($result) {
+				$tuition = R::dispense('tuition');
+				$tuition->created = time();
+				$tuition->project = $project;
+				R::store($tuition);	
+			}
 	    }
 	   
 	   	$lastProgress = R::findOne('progress', ' project_id = :project_id ORDER BY created DESC ', array(':project_id' => $projectId));
