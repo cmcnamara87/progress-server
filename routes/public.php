@@ -22,7 +22,7 @@ $app->get('/setup', function() {
 });
 
 $app->get('/me/following/posts', function() {
-	$posts = R::findAll('post', ' ORDER BY created DESC ');
+	$posts = R::findAll('post', ' ORDER BY created DESC LIMIT 20');
 	foreach($posts as &$post) {
 		$post->user = R::load('user', $post->user_id);
 		$post->project = R::load('project', $post->project_id);

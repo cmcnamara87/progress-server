@@ -100,8 +100,18 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	        return;
 	    }
 
+		
+		
+
 	    $user = R::load('user', $_SESSION['userId']);
 	    $project = R::load('project', $projectId);
+
+	    $app->log->debug(date('l jS \of F Y h:i:s A') . " - Screenshot upload for User ID: " . $_SESSION['userId'] . " {$user->name}, Project: $projectId {$project->name}");
+		
+		foreach (getallheaders() as $name => $value) {
+			$app->log->debug(date('l jS \of F Y h:i:s A') . " - Upload header: $name: $value");
+		}
+
 
 	    $uploaddir = "/var/www/html/progress/uploads/";
 		$uploadfile = $uploaddir . basename($_FILES['file']['name']);
