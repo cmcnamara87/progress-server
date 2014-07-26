@@ -100,9 +100,6 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 	        return;
 	    }
 
-		
-		
-
 	    $user = R::load('user', $_SESSION['userId']);
 	    $project = R::load('project', $projectId);
 

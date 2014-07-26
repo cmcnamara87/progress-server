@@ -6,17 +6,17 @@ $app->get('/hello2', function() use ($app) {
 
 $authenticate = function ($app) {
     return function () use ($app) {
-
+        
     	// Check there is a user id and email set
-        // if (isset($_SESSION['userId']) && isset($_SESSION['userEmail'])) {
-        // 	$user = R::load('user', $_SESSION['userId']);
+        if (isset($_SESSION['userId']) && isset($_SESSION['userEmail'])) {
+        	$user = R::load('user', $_SESSION['userId']);
 
-        //     if($user->id == 0 || $user->email !== $_SESSION['userEmail']) {
-        //         $app->halt(401, 'Login Required.');
-        //     }
-        // } else {
-        //     $app->halt(401, 'Login Required.');
-        // }
+            if($user->id == 0 || $user->email !== $_SESSION['userEmail']) {
+                $app->halt(401, 'Login Required.');
+            }
+        } else {
+            $app->halt(401, 'Login Required.');
+        }
     };
 };
 

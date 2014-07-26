@@ -41,17 +41,18 @@ $app->get('/me/following/online', function() {
 	$online = array();
 	foreach($users as $user) {
 		// Get the last project
-		$lastProgress = R::findOne('progress', ' user_id = :user_id ORDER BY created DESC ', array(':user_id' => $user->id));	
+		$lastProgress = R::findOne('progress', ' user_id = :user_id ORDER BY created DESC LIMIT 1 ', array(':user_id' => $user->id));	
 
 		if($lastProgress && $lastProgress->created + 60*60 > time()) {	
 
-			$user->activeProject = R::load('project', $lastProgress->project_id)->export();
-			$user->state = 'idle';
-			$user->lastProgress = $lastProgress->export(false, false, true);
+			$user = $user->export(false, false, true);
+			$user['activeProject'] = R::load('project', $lastProgress->project_id)->export(false, false, true);
+			$user['state'] = 'idle';
+			$user['lastProgress'] = $lastProgress->export(false, false, true);
 			if($lastProgress->created + 15*60 > time()) {			
-				$user->state = 'active';
+				$user['state'] = 'active';
 			}
-			$online[] = $user->export(false, false, true);;
+			$online[] = $user;
 		}
 	}
 	echo json_encode($online);
