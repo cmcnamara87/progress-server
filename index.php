@@ -41,4 +41,9 @@ $app->add(new \Slim\Middleware\SessionCookie(
 // Add camelcase middleware
 $app->add(new \CamelCaseMiddleware());
 
+
+$app->options('/(:name+)', function() use ($app) {
+    // ...return correct headers...
+});
+
 $app->run();

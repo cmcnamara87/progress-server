@@ -18,7 +18,6 @@ $app->get('/setup', function() {
 	$user->name = 'Craig';
 	$user->password = md5('test');
 	R::store($user);
-
 });
 
 $app->get('/me/following/posts', function() {
@@ -28,12 +27,16 @@ $app->get('/me/following/posts', function() {
 		$post->project = R::load('project', $post->project_id);
 		$post->collection = R::load('collection', $post->collection_id);
 		$post->collection->ownFileList;
+		$post->ownLikeList;
+		foreach($post->ownLikeList as $like) {
+			$like->user;
+		}
 	}
-	echo json_encode(R::exportAll($posts));
+	echo json_encode(R::exportAll($posts), JSON_NUMERIC_CHECK);
 });
 $app->get('/me/following', function() {
 	$users = R::findAll('user');
-	echo json_encode(R::exportAll($users));
+	echo json_encode(R::exportAll($users), JSON_NUMERIC_CHECK);
 });
 
 $app->get('/me/following/online', function() {
@@ -55,7 +58,7 @@ $app->get('/me/following/online', function() {
 			$online[] = $user;
 		}
 	}
-	echo json_encode($online);
+	echo json_encode($online, JSON_NUMERIC_CHECK);
 });
 
 $app->get('/users/:userId/posts', function($userId) {

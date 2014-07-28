@@ -28,7 +28,28 @@ $app->group('/users', function () use ($app) {
 
         $loginData = json_decode($app->request->getBody());
 
-        $user = R::findOne( 'user', ' email = :email ', array(':email' => $app->request->post('email')));
+        if($loginData) {
+            // CHeck we have an email and password
+            if(!isset($loginData->email)) {
+                $app->halt('400', 'Email required.');
+            }
+            if(!isset($loginData->password)) {
+                // $app->halt('400', 'Password required.');
+            }
+            $email = $loginData->email;
+            // $password = $loginData->password;
+        } else {
+            if(!$app->request->post('email')) {
+                $app->halt('400', 'Email required.');
+            }
+            // if(!$app->request->post('password')) {
+                // $app->halt('400', 'Password required.');
+            // }
+            $email = $app->request->post('email');
+            $password = $app->request->post('password');
+        }
+
+        $user = R::findOne( 'user', ' email = :email ', array(':email' => $email));
 
         // if($user->id != 0 && $user->password == hash('md5', $loginData->password)) {
         if($user && $user->id != 0) {

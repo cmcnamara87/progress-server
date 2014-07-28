@@ -5,7 +5,15 @@ function to_camel_case($str, $capitalise_first_char = false) {
 		$str[0] = strtoupper($str[0]);
     }
     $func = create_function('$c', 'return strtoupper($c[1]);');
-    return preg_replace_callback('/_([a-z])/', $func, $str);
+
+    $key = preg_replace_callback('/_([a-z])/', $func, $str);
+
+    if(strpos($key, 'own') !== FALSE) {
+    	$key = strtolower($key);
+    	$key = str_replace("own", "", $key);
+    	$key = $key . "s";
+    }
+    return $key;
 }
 
 function array_to_camel_case($array) {

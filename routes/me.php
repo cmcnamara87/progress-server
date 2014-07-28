@@ -18,7 +18,27 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 
 	});
 
-	
+	$app->delete('/posts/:postId', function($postId) {
+		$post = R::load('post', $postId);
+		if($post->user_id == $_SESSION['userId']) {
+			R::trash($post);
+		}
+	});
+	$app->post('/posts/:postId/likes', function($postId) {
+		// check if there is already a like, if so, do nothing
+		$like = R::findOne('like', ' user_id = :user_id AND post_id = :post_id LIMIT 1 ', array('user_id' => $_SESSION['userId'], 'post_id' => $postId));
+		if($like) {
+			$app->halt(400, 'Post has already been liked');
+		}
+		
+		$like = R::dispense('like');
+		$like->user = R::load('user', $_SESSION['userId']);
+		$like->post = R::load('post', $postId);
+		R::store($like);
+
+		$like->user;
+		echo json_encode($like->export(), JSON_NUMERIC_CHECK);
+	});
 
 	$app->get('/setup', function() use ($app) {
 		R::nuke();
