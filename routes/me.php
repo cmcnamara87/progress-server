@@ -39,6 +39,18 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		$like->user;
 		echo json_encode($like->export(), JSON_NUMERIC_CHECK);
 	});
+	$app->post('/posts/:postId/comments', function($postId) use ($app) {
+
+		$commentData = json_decode($app->request->getBody());
+		$comment = R::dispense('comment');
+		$comment->import($commentData);
+		$comment->user = R::load('user', $_SESSION['userId']);
+		$comment->post = R::load('post', $postId);
+		R::store($comment);
+
+		$comment->user;
+		echo json_encode($comment->export(), JSON_NUMERIC_CHECK);
+	});
 
 	$app->get('/setup', function() use ($app) {
 		R::nuke();

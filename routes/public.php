@@ -31,6 +31,10 @@ $app->get('/me/following/posts', function() {
 		foreach($post->ownLikeList as $like) {
 			$like->user;
 		}
+		$post->ownCommentList;
+		foreach($post->ownCommentList as $comment) {
+			$comment->user;
+		}
 	}
 	echo json_encode(R::exportAll($posts), JSON_NUMERIC_CHECK);
 });

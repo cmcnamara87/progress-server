@@ -85,7 +85,7 @@ $app->group('/users', function () use ($app) {
         $user = R::dispense('user');
         $user->import($userData);
         $user->password = md5($user->password);
-        unset($user['password2']);
+        // unset($user['password2']);
         R::store($user);
 
         $_SESSION['userId'] = $user->id;
