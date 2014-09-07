@@ -65,6 +65,14 @@ $app->get('/me/following/online', function() {
 	echo json_encode($online, JSON_NUMERIC_CHECK);
 });
 
+$app->get('/users/:userId', function($userId) {
+	$user = R::load('user', $userId);
+	$export = $user->export(false, false, true);
+	unset($export['password']);
+	unset($export['email']);
+	echo json_encode($export);
+});
+
 $app->get('/users/:userId/posts', function($userId) {
 	$user = R::load('user', $userId);
 	$posts = R::find('post', ' user_id = :user_id ORDER BY created DESC ', array('user_id' => $userId));
@@ -128,7 +136,17 @@ $app->get('/users/:userId/projects/:projectId', function($userId, $projectId) {
 		$previousTime = $progress->created;
 	}
 	$project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
-	echo json_encode($project->export(false, false, true));
+	$project->ownDirectoryList;
+	$blah = $project->export(false, false, true);
+	unset($blah['ownProgressList']);
+	unset($blah['ownProgress']);
+	unset($blah['progress']);
+	$blah['directories'] = R::exportAll($project->ownDirectoryList);
+	// echo "<pre>";
+	// print_r($blah);
+	// echo "</pre>";
+	// die();
+	echo json_encode($blah);
 });
 
 $app->get('/users/:userId/projects/:projectId/posts', function($userId, $projectId) {
