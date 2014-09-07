@@ -1,9 +1,5 @@
 <?php
 
-$app->get('/hello2', function() use ($app) {
-    echo '{"test_thing": "go now"}';
-});
-
 $authenticate = function ($app) {
     return function () use ($app) {
         
@@ -19,6 +15,22 @@ $authenticate = function ($app) {
         }
     };
 };
+
+/**
+ * Gets the current logged in user, no 401
+ */
+$app->get('/session/user', function() use ($app) {
+    if(isset($_SESSION['userId'])) {
+        $user = R::load('user', $_SESSION['userId']);   
+        if($user && $user->id) {
+            echo json_encode($user->export(), JSON_NUMERIC_CHECK);
+        } else {
+            $app->halt(404, 'No logged in user');    
+        }
+    } else {
+        $app->halt(404, 'No logged in user');
+    }
+});
 
 $app->group('/users', function () use ($app) {
     /**
