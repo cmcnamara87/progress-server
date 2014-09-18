@@ -11,8 +11,29 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		echo '{"hello": "world"}';
 	});
 
-	
-	
+	$app->post('/posts', function() {
+		$project = R::load('project', $projectId);
+		$user = R::load('user', $_SESSION['userId']);	
+
+		$lastProgress = R::findOne('progress', ' user_id = :user_id ORDER BY created DESC LIMIT 1 ', array(':user_id' => $user->id));	
+
+		if(!$lastProgress || $lastProgress->created + 60*60 < time()) {	
+			$app->halt('400', 'No active project');
+		}
+
+		$postData = json_decode($app->request->getBody());
+		$post = R::dispense('post');
+   		$post->user = $user;
+   		$post->project = $lastProgress->project;
+   		$post->type = 'TEXT';
+   		$post->text = $postData->text;
+   		$post->created = time();
+   		$post->modified = time();
+   		R::store($post);
+
+		echo json_encode($post->export(), JSON_NUMERIC_CHECK);   		
+	});
+
 	$app->delete('/posts/:postId', function($postId) {
 		$post = R::load('post', $postId);
 		if($post->user_id == $_SESSION['userId']) {
