@@ -1,6 +1,6 @@
 <?php
 date_default_timezone_set("Australia/Brisbane");
-
+include('class.upload.php');
 
 // $_SESSION['userId'] = 1;
 
@@ -8,16 +8,11 @@ date_default_timezone_set("Australia/Brisbane");
 $app->group('/me', $authenticate($app), function () use ($app) {
 // $app->group('/me', function () use ($app) {
 	$app->get('/hello', function() use ($app) {
-		// print_r($_SESSION);
-		// die();
 		echo '{"hello": "world"}';
-		// $projectId = 1;
-		 // else {
-	    	// echo 'already done';
-	    // }
-
 	});
 
+	
+	
 	$app->delete('/posts/:postId', function($postId) {
 		$post = R::load('post', $postId);
 		if($post->user_id == $_SESSION['userId']) {
@@ -127,6 +122,8 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		echo 'got screenshots!';
 	});
 	$app->post('/projects/:projectId/screenshots', function ($projectId) use ($app) {
+
+
 	    if (!isset($_FILES['file'])) {
 	        echo "No file uploaded!!";
 	        return;
@@ -141,14 +138,39 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 			$app->log->debug(date('l jS \of F Y h:i:s A') . " - Upload header: $name: $value");
 		}
 
+		$uploaddir = "/var/www/html/progress/uploads/";
 
-	    $uploaddir = "/var/www/html/progress/uploads/";
-		$uploadfile = $uploaddir . basename($_FILES['file']['name']);
+		$handle = new Upload($_FILES['file']);
+		if ($handle->uploaded) {
+			if($handle->image_src_x > 1080) {
+				$handle->image_resize          = true;
+				$handle->image_ratio_y         = true;
+	    		$handle->image_x               = $handle->image_src_x / 2;	
+			} else if($handle->image_src_y > 1080) {
+				$handle->image_resize          = true;
+				$handle->image_ratio_x         = true;
+	    		$handle->image_y               = $handle->image_src_y / 2;	
+			}
+			
+	        // now, we start the upload 'process'. That is, to copy the uploaded file
+	        // from its temporary location to the wanted location
+	        // It could be something like $handle->Process('/home/www/my_uploads/');
+	        $handle->Process($uploaddir);
 
-		// echo '<pre>';
-		if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
-			$app->halt(400, 'Possible file upload attack');
+	        // we check if everything went OK
+	        if (!$handle->processed) {
+	        	$app->halt(400, 'Processing failed.');	
+			}
+		} else {
+			$app->halt(400, 'Upload failed.');	
 		}
+
+		// $uploadfile = $uploaddir . basename($_FILES['file']['name']);
+
+		// // echo '<pre>';
+		// if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)) {
+		// 	$app->halt(400, 'Possible file upload attack');
+		// }
 
 		// File upload success
 		$collection = R::dispense('collection');
@@ -157,7 +179,7 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		R::store($collection);
 
 		$file = R::dispense('file');
-		$file->name = basename($_FILES['file']['name']);
+		$file->name = $handle->file_dst_name;
 		$file->user = $user;
 		$file->project = $project;
 		$file->collection = $collection;

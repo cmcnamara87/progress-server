@@ -40,7 +40,13 @@ $app->get('/me/following/posts', function() {
 });
 $app->get('/me/following', function() {
 	$users = R::findAll('user');
-	echo json_encode(R::exportAll($users), JSON_NUMERIC_CHECK);
+	$export = array_map(function($user) {
+		$result = new stdClass();
+		$result->id = $user->id;
+		$result->name = $user->name;
+		return $result;
+	}, $users);
+	echo json_encode(array_values($export), JSON_NUMERIC_CHECK);
 });
 
 $app->get('/me/following/online', function() {
