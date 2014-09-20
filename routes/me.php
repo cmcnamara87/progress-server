@@ -5,66 +5,98 @@ include('class.upload.php');
 // $_SESSION['userId'] = 1;
 
 // Restricted to logged in current user
-$app->group('/me', $authenticate($app), function () use ($app) {
+$app->group('/me', $authenticate($app), function() use ($app) {
 // $app->group('/me', function () use ($app) {
 	$app->get('/hello', function() use ($app) {
 		echo '{"hello": "world"}';
 	});
 
-	$app->post('/posts', function() use ($app) {
-		$user = R::load('user', $_SESSION['userId']);	
-
-		$lastProgress = R::findOne('progress', ' user_id = :user_id ORDER BY created DESC LIMIT 1 ', array(':user_id' => $user->id));	
-		if(!$lastProgress || $lastProgress->created + 60*60 < time()) {	
-			$app->halt('400', 'No active project');
-		}
-
-		$postData = json_decode($app->request->getBody());
-		$post = R::dispense('post');
-   		$post->user = $user;
-   		$post->project = $lastProgress->project;
-   		$post->type = 'TEXT';
-   		$post->text = $postData->text;
-   		$post->created = time();
-   		$post->modified = time();
-   		R::store($post);
-
-		echo json_encode($post->export(), JSON_NUMERIC_CHECK);   		
+	$app->group('/notifications', function() use ($app) {
+		$app->get('/', function() {
+			$notifications = R::find( 'notification', ' user_id = :user_id AND isread = \'hello\' ', array(
+				':user_id' => $_SESSION['userId']
+			));
+			echo json_encode(R::exportAll($notifications), JSON_NUMERIC_CHECK);
+		});
 	});
 
-	$app->delete('/posts/:postId', function($postId) {
-		$post = R::load('post', $postId);
-		if($post->user_id == $_SESSION['userId']) {
-			R::trash($post);
-		}
-	});
-	$app->post('/posts/:postId/likes', function($postId) {
-		// check if there is already a like, if so, do nothing
-		$like = R::findOne('like', ' user_id = :user_id AND post_id = :post_id LIMIT 1 ', array('user_id' => $_SESSION['userId'], 'post_id' => $postId));
-		if($like) {
-			$app->halt(400, 'Post has already been liked');
-		}
-		
-		$like = R::dispense('like');
-		$like->user = R::load('user', $_SESSION['userId']);
-		$like->post = R::load('post', $postId);
-		R::store($like);
+	$app->group('/posts', function () use ($app) {
+		$app->post('/', function() use ($app) {
+			$user = R::load('user', $_SESSION['userId']);	
 
-		$like->user;
-		echo json_encode($like->export(), JSON_NUMERIC_CHECK);
-	});
-	$app->post('/posts/:postId/comments', function($postId) use ($app) {
+			$lastProgress = R::findOne('progress', ' user_id = :user_id ORDER BY created DESC LIMIT 1 ', array(':user_id' => $user->id));	
+			if(!$lastProgress || $lastProgress->created + 60*60 < time()) {	
+				$app->halt('400', 'No active project');
+			}
 
-		$commentData = json_decode($app->request->getBody());
-		$comment = R::dispense('comment');
-		$comment->import($commentData);
-		$comment->user = R::load('user', $_SESSION['userId']);
-		$comment->post = R::load('post', $postId);
-		R::store($comment);
+			$postData = json_decode($app->request->getBody());
+			$post = R::dispense('post');
+	   		$post->user = $user;
+	   		$post->project = $lastProgress->project;
+	   		$post->type = 'TEXT';
+	   		$post->text = $postData->text;
+	   		$post->created = time();
+	   		$post->modified = time();
+	   		R::store($post);
 
-		$comment->user;
-		echo json_encode($comment->export(), JSON_NUMERIC_CHECK);
+			echo json_encode($post->export(), JSON_NUMERIC_CHECK);   		
+		});
+
+		$app->delete('/:postId', function($postId) {
+			$post = R::load('post', $postId);
+			if($post->user_id == $_SESSION['userId']) {
+				R::trash($post);
+			}
+		});
+		$app->post('/:postId/likes', function($postId) {
+			// check if there is already a like, if so, do nothing
+			$like = R::findOne('like', ' user_id = :user_id AND post_id = :post_id LIMIT 1 ', array('user_id' => $_SESSION['userId'], 'post_id' => $postId));
+			if($like) {
+				$app->halt(400, 'Post has already been liked');
+			}
+			
+			$user = R::load('user', $_SESSION['userId']);
+			$post = R::load('post', $postId);
+			$like = R::dispense('like');
+			$like->user = $user;
+			$like->post = $post;
+			R::store($like);
+
+			$notification = R::dispense('notification');
+			$notification->user = $post->user;
+			$notification->text= "{$user->name} liked on your post.";
+			$notification->post = $post;
+			$notification->isread = 0;
+			R::store($notification);
+
+			$like->user;
+			echo json_encode($like->export(), JSON_NUMERIC_CHECK);
+		});
+		$app->post('/:postId/comments', function($postId) use ($app) {
+
+			$user = R::load('user', $_SESSION['userId']);
+			$post = R::load('post', $postId);
+			$commentData = json_decode($app->request->getBody());
+			$comment = R::dispense('comment');
+			$comment->import($commentData);
+			$comment->user = $user;
+			$comment->post = $post;
+			R::store($comment);
+
+			// Make a notification
+			$notification = R::dispense('notification');
+			$notification->user = $post->user;
+			$notification->text= "{$user->name} liked on your post.";
+			$notification->post = $post;
+			$notification->isread = 0;
+			R::store($notification);
+
+			$comment->user;
+			echo json_encode($comment->export(), JSON_NUMERIC_CHECK);
+		});
 	});
+
+	
 
 	$app->get('/setup', function() use ($app) {
 		R::nuke();
