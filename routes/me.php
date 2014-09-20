@@ -11,12 +11,10 @@ $app->group('/me', $authenticate($app), function () use ($app) {
 		echo '{"hello": "world"}';
 	});
 
-	$app->post('/posts', function() {
-		$project = R::load('project', $projectId);
+	$app->post('/posts', function() use ($app) {
 		$user = R::load('user', $_SESSION['userId']);	
 
 		$lastProgress = R::findOne('progress', ' user_id = :user_id ORDER BY created DESC LIMIT 1 ', array(':user_id' => $user->id));	
-
 		if(!$lastProgress || $lastProgress->created + 60*60 < time()) {	
 			$app->halt('400', 'No active project');
 		}
