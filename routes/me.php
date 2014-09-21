@@ -13,12 +13,47 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 
 	$app->group('/notifications', function() use ($app) {
 		$app->get('/', function() {
-			$notifications = R::find( 'notification', ' user_id = :user_id AND isread = \'hello\' ', array(
+			$notifications = R::find( 'notification', ' user_id = :user_id AND isread = 0', array(
 				':user_id' => $_SESSION['userId']
 			));
+			foreach($notifications as $notification) {
+				if(isset($notification->post->collection) && count($notification->post->collection->ownFileList)) {
+					$notification->images = $notification->post->collection->ownFileList;
+				}
+
+			}
 			echo json_encode(R::exportAll($notifications), JSON_NUMERIC_CHECK);
 		});
+		$app->put('/:notificationId', function($notificationId) use ($app) {
+			$notification = R::load('notification', $notificationId);
+			$notificationData = json_decode($app->request->getBody());
+			$notification->isread = $notificationData->isread;
+			R::store($notification);
+
+			echo json_encode($notification->export(), JSON_NUMERIC_CHECK);
+		});
 	});
+
+	$app->get('/following/leaderboard', function() {
+		$startOfWeek = strtotime('Monday this week'); 
+		$users = R::findAll('user');
+
+		foreach($users as $user) {
+			$times = R::findAll('time', ' type = \'week\' AND date = :startOfWeek AND user_id = :userId ', array(
+				':startOfWeek' => $startOfWeek,
+				':userId' => $user->id
+			));
+			$user->seconds = 0;
+			foreach($times as $time) {
+				$user->seconds += $time->seconds;
+			}
+			$user->time = gmdate("z\d G\h i\m s\s", $user->seconds);
+		}
+
+		echo json_encode(R::beansToArray($users), JSON_NUMERIC_CHECK);
+	});
+
+
 
 	$app->group('/posts', function () use ($app) {
 		$app->post('/', function() use ($app) {
@@ -39,6 +74,7 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 	   		$post->modified = time();
 	   		R::store($post);
 
+	   		$post->user;
 			echo json_encode($post->export(), JSON_NUMERIC_CHECK);   		
 		});
 
@@ -86,7 +122,7 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 			// Make a notification
 			$notification = R::dispense('notification');
 			$notification->user = $post->user;
-			$notification->text= "{$user->name} liked on your post.";
+			$notification->text= "{$user->name} commented on your post. <br/>\"{$comment->text}\"";
 			$notification->post = $post;
 			$notification->isread = 0;
 			R::store($notification);
@@ -99,7 +135,6 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 	
 
 	$app->get('/setup', function() use ($app) {
-		R::nuke();
 
 		// $_SESSION['userId'] = 1;
 		$user = R::dispense('user');
@@ -318,6 +353,42 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 	    $progress->project = $project;
 	    $progress->user = $user;
 	    R::store($progress);
+
+	    // Update the project
+   		if(!$project->lastprogress) {
+   			$project->lastprogress = time();
+   		}
+		$hasWorkedWithinAnHour = $project->lastprogress > (time() - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+		if($hasWorkedWithinAnHour) {
+			$addedSeconds = min(time() - $project->lastprogress, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+		} else {
+			$addedSeconds = PROGRESS_DEFAULT_AMOUNT_MINUTES;
+		}
+		$project->seconds += $addedSeconds;
+		$project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
+		$project->lastprogress = time();
+		R::store($project);
+
+		// Update the leaderboard
+		$startOfWeek = strtotime('Monday this week');
+		$time = R::findOne('time', ' type = \'week\' AND project_id = :projectId AND date = :startOfWeek ', array(
+			':projectId' => $project->id,
+			':startOfWeek' => $startOfWeek
+		));
+
+		if(!$time) {
+			$time = R::dispense('time');
+			$time->type = 'week';
+			$time->date = $startOfWeek;
+			$time->project = $project;
+			$time->user = $user;
+			$time->seconds = 0;
+	   	}
+		$time->seconds += $addedSeconds;
+		$time->time = gmdate("z\d G\h i\m s\s", $time->seconds);
+		R::store($time);
+
+		echo json_encode(R::beansToArray(array($project)));
 	});
 
 	$app->get('/profile', function() {

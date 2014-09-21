@@ -5,8 +5,6 @@ $app->get('/hello', function() use ($app) {
 });
 
 $app->get('/setup', function() {
-	R::nuke();
-
 	// $user = R::dispense('user');
 	// $user->email = 'test@example.com';
 	// $user->name = 'Test';
@@ -18,6 +16,109 @@ $app->get('/setup', function() {
 	$user->name = 'Craig';
 	$user->password = md5('test');
 	R::store($user);
+});
+
+$app->get('/setuproject/:projectId', function($projectId) {
+	$project = R::load('project', $projectId);
+		// foreach($projects as $project) {
+		// $time = 0;
+		$previousTime = null;
+		$project->seconds = 0;
+		foreach($project->ownProgressList as $progress) {
+			$hasAlreadyMadeProgress = !!$previousTime;
+			if($hasAlreadyMadeProgress) {
+				$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+				if($hasWorkedWithinAnHour) {
+					$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+				} else {
+					$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+				}
+			}
+			$previousTime = $progress->created;
+		}
+		$project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
+		R::store($project);
+	// }
+});
+
+$app->get('/fixkhoa', function() {
+	$projectId = 62;
+	$startOfWeek = strtotime('Monday this week');
+	$time = R::findOne('time', ' type = \'week\' AND project_id = :projectId AND date = :startOfWeek ', array(
+		':projectId' => $projectId,
+		':startOfWeek' => $startOfWeek
+	));
+
+	$progresses = R::find('progress', ' created > :startOfWeek AND project_id = :projectId ', array(
+		':startOfWeek' => $startOfWeek,
+		':projectId' => $projectId,
+	));
+
+	$previousTime = null;
+	$time->seconds = 0;
+	foreach($progresses as $progress) {
+		$hasAlreadyMadeProgress = !!$previousTime;
+		if($hasAlreadyMadeProgress) {
+			$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+			if($hasWorkedWithinAnHour) {
+				$time->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+			} else {
+				$time->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+			}
+		}
+		$previousTime = $progress->created;
+	}
+	$time->time = gmdate("z\d G\h i\m s\s", $time->seconds);
+	R::store($time);
+});
+
+$app->get('/createleaderboard', function() {
+	$startOfWeek = strtotime('Monday this week');
+
+	$users = R::findAll('user');
+	foreach($users as $user) {
+		// $user = R::load('user', $userId);
+		$projects = $user->ownProjectList;
+
+		foreach($projects as $project) {
+			// $time = 0;
+			$previousTime = null;
+			$project->seconds = 0;
+
+			$time = R::dispense('time');
+			$time->type = 'week';
+			$time->date = $startOfWeek;
+			$time->time = 0;
+			$time->project = $project;
+			$time->user = $user;
+
+			$progresses = R::find('progress', ' created > :startOfWeek AND project_id = :projectId ', array(
+				':startOfWeek' => $startOfWeek,
+				':projectId' => $project->id,
+			));
+
+			if(count($progresses) == 0) {
+				continue;
+			}
+		
+			foreach($progresses as $progress) {
+				$hasAlreadyMadeProgress = !!$previousTime;
+				if($hasAlreadyMadeProgress) {
+					$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+					if($hasWorkedWithinAnHour) {
+						$time->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+					} else {
+						$time->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+					}
+				}
+				$previousTime = $progress->created;
+			}
+			$time->time = gmdate("z\d G\h i\m s\s", $time->seconds);
+
+			R::store($time);
+		}
+	}
+	
 });
 
 $app->get('/me/following/posts', function() {
@@ -84,29 +185,43 @@ $app->get('/users/:userId/posts', function($userId) {
 	$posts = R::find('post', ' user_id = :user_id ORDER BY created DESC ', array('user_id' => $userId));
 	echo json_encode(R::exportAll($posts));
 });
+$app->get('/posts/:postId', function($postId) {
+	$post = R::load('post', $postId);
+	$post->user;
+	$post->project;
+	$post->ownLike;
+	foreach($post->ownLike as $like) {
+		$like->user;
+	}
+	foreach($post->ownComment as $comment) {
+		$comment->user;
+	}
+	echo json_encode($post->export(), JSON_NUMERIC_CHECK);
+});
 
 $app->get('/users/:userId/projects', function($userId) {
 	$user = R::load('user', $userId);
 	$projects = $user->ownProjectList;
-	header( 'Content-Type: text/html' );
-	foreach($projects as $project) {
-		// $time = 0;
-		$previousTime = null;
-		$project->seconds = 0;
-		foreach($project->ownProgressList as $progress) {
-			$hasAlreadyMadeProgress = !!$previousTime;
-			if($hasAlreadyMadeProgress) {
-				$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
-				if($hasWorkedWithinAnHour) {
-					$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
-				} else {
-					$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
-				}
-			}
-			$previousTime = $progress->created;
-		}
-		$project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
-	}
+	// header( 'Content-Type: text/html' );
+	// foreach($projects as $project) {
+	// 	// $time = 0;
+	// 	$previousTime = null;
+	// 	$project->seconds = 0;
+	// 	foreach($project->ownProgressList as $progress) {
+	// 		$hasAlreadyMadeProgress = !!$previousTime;
+	// 		if($hasAlreadyMadeProgress) {
+	// 			$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+	// 			if($hasWorkedWithinAnHour) {
+	// 				$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+	// 			} else {
+	// 				$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+	// 			}
+	// 		}
+	// 		$previousTime = $progress->created;
+	// 	}
+	// 	$project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
+	// 	R::store($project);
+	// }
 	
 
 	$export = array_map(function($project) {
@@ -127,21 +242,21 @@ $app->get('/users/:userId/projects/:projectId', function($userId, $projectId) {
 	$project = R::load('project', $projectId);
 	$project->user = R::load('user', $userId);
 
-	$previousTime = null;
-	$project->seconds = 0;
-	foreach($project->ownProgressList as $progress) {
-		$hasAlreadyMadeProgress = isset($previousTime);
-		if($previousTime) {
-			$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
-			if($hasWorkedWithinAnHour) {
-				$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
-			} else {
-				$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
-			}
-		}
-		$previousTime = $progress->created;
-	}
-	$project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
+	// $previousTime = null;
+	// $project->seconds = 0;
+	// foreach($project->ownProgressList as $progress) {
+	// 	$hasAlreadyMadeProgress = isset($previousTime);
+	// 	if($previousTime) {
+	// 		$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+	// 		if($hasWorkedWithinAnHour) {
+	// 			$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+	// 		} else {
+	// 			$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+	// 		}
+	// 	}
+	// 	$previousTime = $progress->created;
+	// }
+	// $project->time = gmdate("z\d G\h i\m s\s", $project->seconds);
 	$project->ownDirectoryList;
 	$blah = $project->export(false, false, true);
 	unset($blah['ownProgressList']);

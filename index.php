@@ -1,6 +1,6 @@
 <?php
 require 'vendor/autoload.php';
-require 'rb.phar';
+require 'rb.php';
 // header('Content-type: application/json');
 
 define('TUITION_PING_TIME_MINUTES', 15);
