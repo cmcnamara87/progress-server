@@ -158,37 +158,42 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 		$user = R::load('user', $_SESSION['userId']);	
 		echo json_encode($user->export(), JSON_NUMERIC_CHECK);
 	});
-	$app->get('/projects', function() {
+	$app->get('/projects', function() use ($app) {
+	    $app->log->debug(date('l jS \of F Y h:i:s A') . " - Getting projects");
 		$user = R::load('user', $_SESSION['userId']);
 		$projects = $user->ownProjectList;
 		foreach($projects as $project) {
-			$previousTime = null;
-			$project->seconds = 0;
-			foreach($project->ownProgressList as $progress) {
-				$hasAlreadyMadeProgress = isset($previousTime);
-				if($previousTime) {
-					$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
-					if($hasWorkedWithinAnHour) {
-						$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
-					} else {
-						$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
-					}
-				}
-				$previousTime = $progress->created;
-			}
-			$project->time = gmdate("H:i:s", $project->seconds);
+			$project->directories = $project->ownDirectory;
 		}
-		$export = array_map(function($project) {
-			$result = new stdClass();
-			$result->id = $project->id;
-			$result->name = $project->name;
-			$result->seconds = $project->seconds;
-			$result->time = $project->time;
-			$result->directories = R::exportAll($project->ownDirectoryList);
-			return $result;
-		}, $projects);
 
-		echo json_encode(array_values($export), JSON_NUMERIC_CHECK);
+		// foreach($projects as $project) {
+		// 	$previousTime = null;
+		// 	$project->seconds = 0;
+		// 	foreach($project->ownProgressList as $progress) {
+		// 		$hasAlreadyMadeProgress = isset($previousTime);
+		// 		if($previousTime) {
+		// 			$hasWorkedWithinAnHour = $previousTime > ($progress->created - PROGRESS_ACTIVE_TIME_MINUTES * 60);
+		// 			if($hasWorkedWithinAnHour) {
+		// 				$project->seconds += min($progress->created - $previousTime, PROGRESS_MAX_AMOUNT_MINUTES * 60);	
+		// 			} else {
+		// 				$project->seconds += PROGRESS_DEFAULT_AMOUNT_MINUTES;
+		// 			}
+		// 		}
+		// 		$previousTime = $progress->created;
+		// 	}
+		// 	$project->time = gmdate("H:i:s", $project->seconds);
+		// }
+		// $export = array_map(function($project) {
+		// 	$result = new stdClass();
+		// 	$result->id = $project->id;
+		// 	$result->name = $project->name;
+		// 	$result->seconds = $project->seconds;
+		// 	$result->time = $project->time;
+		// 	$result->directories = R::exportAll($project->ownDirectoryList);
+		// 	return $result;
+		// }, $projects);
+
+		echo json_encode(R::beansToArray($projects), JSON_NUMERIC_CHECK);
 	});
 	$app->post('/projects', function() use ($app) {
 		$project = R::dispense('project');
@@ -286,6 +291,8 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 		echo json_encode($collection->export(false, false, true), JSON_NUMERIC_CHECK);
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
+
+		$app->log->debug(date('l jS \of F Y h:i:s A') . " - TEST");
 
 		// Debug logging
 	    $project = R::load('project', $projectId);

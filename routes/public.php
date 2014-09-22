@@ -1,7 +1,8 @@
 <?php
 
-$app->get('/hello', function() use ($app) {
-	echo '{"test_thing": "go now 2222"}';
+$app->post('/hello', function() use ($app) {
+	// echo '{"test_thing": "go now 2222"}';
+	echo "NO JSON";
 });
 
 $app->get('/setup', function() {
