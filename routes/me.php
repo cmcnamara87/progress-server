@@ -98,12 +98,14 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 			$like->post = $post;
 			R::store($like);
 
-			$notification = R::dispense('notification');
-			$notification->user = $post->user;
-			$notification->text= "{$user->name} liked on your post.";
-			$notification->post = $post;
-			$notification->isread = 0;
-			R::store($notification);
+			if($user->id != $post->user_id) {
+				$notification = R::dispense('notification');
+				$notification->user = $post->user;
+				$notification->text= "{$user->name} liked on your post.";
+				$notification->post = $post;
+				$notification->isread = 0;
+				R::store($notification);
+			}
 
 			$like->user;
 			echo json_encode($like->export(), JSON_NUMERIC_CHECK);
