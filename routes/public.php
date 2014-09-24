@@ -152,6 +152,14 @@ $app->get('/me/following', function() {
 });
 
 $app->get('/me/following/online', function() {
+
+	if(isset($_SESSION['userId'])) {
+		$user = R::load('user', $_SESSION['userId']);
+		$user->lastseen = time();
+		$user->lastseentext = date("D M d, Y G:i");
+		R::store($user);
+	}
+
 	$users = R::findAll('user');
 	$online = array();
 	foreach($users as $user) {
