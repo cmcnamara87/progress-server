@@ -292,8 +292,6 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 	});
 	$app->post('/projects/:projectId/progress', function($projectId) use ($app) {
 
-		$app->log->debug(date('l jS \of F Y h:i:s A') . " - TEST");
-
 		// Debug logging
 	    $project = R::load('project', $projectId);
 		$user = R::load('user', $_SESSION['userId']);	

@@ -2,25 +2,17 @@
 
 $authenticate = function ($app) {
     return function () use ($app) {
-        
-        $app->log->debug(date('l jS \of F Y h:i:s A') . " - Session " . json_encode($_SESSION) . ' ' . json_encode($_POST));
-
-        $app->log->debug(date('l jS \of F Y h:i:s A') . " - Server " . ' ' . json_encode($_SERVER));
 
     	// Check there is a user id and email set
         if (isset($_SESSION['userId']) && isset($_SESSION['userEmail'])) {
         	$user = R::load('user', $_SESSION['userId']);
 
             if($user->id == 0 || $user->email !== $_SESSION['userEmail']) {
-                $app->log->debug(date('l jS \of F Y h:i:s A') . " - Login required");
                 $app->halt(401, 'Login Required.');
             }
         } else {
-            $app->log->debug(date('l jS \of F Y h:i:s A') . " - Login required");
             $app->halt(401, 'Login Required.');
         }
-
-        $app->log->debug(date('l jS \of F Y h:i:s A') . " - Auth Accepted " . json_encode($_SESSION));
     };
 };
 
