@@ -241,11 +241,11 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 			if($handle->image_src_x > 1080) {
 				$handle->image_resize          = true;
 				$handle->image_ratio_y         = true;
-	    		$handle->image_x               = $handle->image_src_x / 2;	
+	    		$handle->image_x               = $handle->image_src_x / 1.5;	
 			} else if($handle->image_src_y > 1080) {
 				$handle->image_resize          = true;
 				$handle->image_ratio_x         = true;
-	    		$handle->image_y               = $handle->image_src_y / 2;	
+	    		$handle->image_y               = $handle->image_src_y / 1.5;	
 			}
 			
 	        // now, we start the upload 'process'. That is, to copy the uploaded file
