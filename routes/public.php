@@ -199,6 +199,9 @@ $app->get('/posts/:postId', function($postId) {
 	$post->user;
 	$post->project;
 	$post->ownLike;
+	if($post->collection) {
+		$post->collection->ownFileList;
+	}
 	foreach($post->ownLike as $like) {
 		$like->user;
 	}
