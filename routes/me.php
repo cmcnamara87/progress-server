@@ -238,15 +238,15 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 
 		$handle = new Upload($_FILES['file']);
 		if ($handle->uploaded) {
-			if($handle->image_src_x > 1080) {
-				$handle->image_resize          = true;
-				$handle->image_ratio_y         = true;
-	    		$handle->image_x               = $handle->image_src_x / 1.5;	
-			} else if($handle->image_src_y > 1080) {
-				$handle->image_resize          = true;
-				$handle->image_ratio_x         = true;
-	    		$handle->image_y               = $handle->image_src_y / 1.5;	
-			}
+			// if($handle->image_src_x > 1080) {
+			// 	$handle->image_resize          = true;
+			// 	$handle->image_ratio_y         = true;
+	  //   		$handle->image_x               = $handle->image_src_x / 1.5;	
+			// } else if($handle->image_src_y > 1080) {
+			// 	$handle->image_resize          = true;
+			// 	$handle->image_ratio_x         = true;
+	  //   		$handle->image_y               = $handle->image_src_y / 1.5;	
+			// }
 			
 	        // now, we start the upload 'process'. That is, to copy the uploaded file
 	        // from its temporary location to the wanted location
@@ -339,11 +339,13 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 			}
 	    }
 	   
-	   	$lastProgress = R::findOne('progress', ' project_id = :project_id ORDER BY created DESC ', array(':project_id' => $projectId));
+	   	$lastProgress = R::findOne('progress', ' project_id = :project_id ORDER BY created DESC LIMIT 1 ', array(':project_id' => $projectId));
 	   	$firstPost = R::findOne('post', ' project_id = :project_id AND user_id = :user_id ', array(':project_id' => $projectId, ':user_id' => $user->id));
 
 	   	$hasNoPostForProject = !$firstPost; // can remove this if people stop working
-	   	$hasRecentlyStartedWorking = $lastProgress && $lastProgress->created + 60 * 60 < time();
+	   	// no progress hasnt been added yet
+	   	// checking if last progress was over 5hrs ago, if so, add a post
+	   	$hasRecentlyStartedWorking = $lastProgress && $lastProgress->created + 60 * 60 * 5 < time();
 	   	if($hasNoPostForProject || $hasRecentlyStartedWorking) {
 	   		$app->log->debug(date('l jS \of F Y h:i:s A') . " - Making Post for User ID: " . $_SESSION['userId'] . " {$user->name}, Project: $projectId {$project->name}");
 
