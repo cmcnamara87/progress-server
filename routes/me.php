@@ -219,6 +219,18 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 	});
 	$app->post('/projects/:projectId/screenshots', function ($projectId) use ($app) {
 
+		$config = array(
+		    'ssl' => false // Enable/Disable SSL, default false
+		);
+		$client = Krizon\Google\Analytics\MeasurementProtocol\MeasurementProtocolClient::factory($config);
+		$client->event(array(
+		    'tid' => 'UA-51312192-2', // Tracking Id 
+		    'cid' => $_SESSION['userId'], // Customer Id
+		    'uid' => $_SESSION['userId'], // hopefully the user id ... eep
+		    't'	=> 'screenshot-add',       // Event hit type
+			'ec' => 'screenshot-add',       // Event Category. Required.
+			'ea' => 'screenshot-add'        // Event Action. Required.
+		));
 
 	    if (!isset($_FILES['file'])) {
 	        echo "No file uploaded!!";
