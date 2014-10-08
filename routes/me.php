@@ -238,15 +238,15 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 
 		$handle = new Upload($_FILES['file']);
 		if ($handle->uploaded) {
-			// if($handle->image_src_x > 1080) {
-			// 	$handle->image_resize          = true;
-			// 	$handle->image_ratio_y         = true;
-	  //   		$handle->image_x               = $handle->image_src_x / 1.5;	
-			// } else if($handle->image_src_y > 1080) {
-			// 	$handle->image_resize          = true;
-			// 	$handle->image_ratio_x         = true;
-	  //   		$handle->image_y               = $handle->image_src_y / 1.5;	
-			// }
+			if($handle->image_src_x > 2000) {
+				$handle->image_resize          = true;
+				$handle->image_ratio_y         = true;
+	    		$handle->image_x               = $handle->image_src_x / 1.5;	
+			} else if($handle->image_src_y > 2000) {
+				$handle->image_resize          = true;
+				$handle->image_ratio_x         = true;
+	    		$handle->image_y               = $handle->image_src_y / 1.5;	
+			}
 			
 	        // now, we start the upload 'process'. That is, to copy the uploaded file
 	        // from its temporary location to the wanted location
@@ -290,7 +290,14 @@ $app->group('/me', $authenticate($app), function() use ($app) {
    		$post->collection = $collection;
    		$post->created = time();
    		$post->modified = time();
-   		$post->text = $app->request->post('text');
+
+   		$screenshotData = json_decode($app->request->getBody());
+   		if(isset($screenshotData->text)) {
+   			$post->text = $screenshotData->text;
+   		} else {
+   			$post->text = $app->request->post('text');
+   		}
+   		$app->log->debug(date('l jS \of F Y h:i:s A') . " - Screenshot data: " . $app->request->getBody());
    		R::store($post);
 
 		echo json_encode($collection->export(false, false, true), JSON_NUMERIC_CHECK);
