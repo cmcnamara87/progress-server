@@ -5,9 +5,9 @@ include('class.upload.php');
 // $_SESSION['userId'] = 1;
 
 // Restricted to logged in current user
-$app->group('/me', $authenticate($app), function() use ($app) {
+$app->group('/me', $authenticate($app), function () use ($app) {
 // $app->group('/me', function () use ($app) {
-	$app->get('/hello', function() use ($app) {
+    $app->get('/hello', function() use ($app) {
 		echo '{"hello": "world"}';
 	});
 
@@ -129,6 +129,16 @@ $app->group('/me', $authenticate($app), function() use ($app) {
 				$notification->post = $post;
 				$notification->isread = 0;
 				R::store($notification);
+			}
+			foreach($post->ownComment as $comment) {
+				if($comment->user->id != $post->user_id && $comment->user->id != $_SESSION['userId']) {
+					$notification = R::dispense('notification');
+					$notification->user = $comment->user;
+					$notification->text= "{$user->name} commented on a post. <br/>\"{$comment->text}\"";
+					$notification->post = $post;
+					$notification->isread = 0;
+					R::store($notification);
+				}
 			}
 			
 
