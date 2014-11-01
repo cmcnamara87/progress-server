@@ -123,7 +123,7 @@ $app->get('/createleaderboard', function() {
 });
 
 $app->get('/me/following/posts', function() {
-	$posts = R::find('post', ' type != \'STARTED_WORKING\' ORDER BY created DESC LIMIT 20');
+	$posts = R::find('post', ' type != \'STARTED_WORKING\' ORDER BY created DESC LIMIT 40');
 	foreach($posts as &$post) {
 		$post->user = R::load('user', $post->user_id);
 		$post->project = R::load('project', $post->project_id);
