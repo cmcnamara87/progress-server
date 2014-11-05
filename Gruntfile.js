@@ -13,13 +13,76 @@ module.exports = function(grunt) {
                     '-lf': null
                 }
             },
-            all: ['index.php', 'routes/**/*.php', 'middleware/**/*.php', 'push/**/*.php', 'db/**/*.php']
+            all: ['src/**/*.php']
+        },
+
+        setPHPConstant: {
+            productionCore: {
+                    constant    : 'CORE_PATH',
+                    value       : '/../../../progress-laravel',
+                    file        : 'dist/public/index.php'
+            },
+            productionPublic: {
+                constant    : 'PUBLIC_PATH',
+                value       : '/../../html/progress/api',
+                file        : 'dist/bootstrap/paths.php'
+            },
+            productionEnv: {
+                constant    : 'LARAVEL_ENV',
+                value       : 'production',
+                file        : 'dist/bootstrap/start.php'
+            }
+        },
+
+        concurrent: {
+            target: {
+                tasks: ['php:watch', 'watch'],
+                options: {
+                    logConcurrentOutput: true
+                }
+            }
         },
 
         watch: {
-            php: {
-                files: ['index.php', 'routes/**/*.php', 'middleware/**/*.php', 'push/**/*.php', 'db/**/*.php'],
+            lint: {
+                files: ['src/**/*.php'],
                 tasks: ['phplint']
+            },
+            markup: {
+                files: ['**/*.php'],
+                options: {
+                    livereload: 36000
+                }
+                // tasks: ['php:dev']
+            }
+        },
+
+        php: {
+            options: {
+                port: 8000,
+                keepalive: true,
+                open: true,
+                base: 'src/',
+                hostname: 'localhost',
+                bin: '/Applications/MAMP/bin/php/php5.4.4/bin/php',
+                ini: '/Applications/MAMP/bin/php/php5.4.4/conf/php.ini'
+            },
+            watch: {
+                options: {
+                    livereload: 8000
+                }
+            }
+        },
+
+        copy: {
+            dist: {
+                files: [{
+                    expand: true,
+                    dot: true,
+                    cwd: 'src',
+                    dest: 'dist',
+                    src: ['**/*']
+                }]
             }
         },
 
@@ -29,9 +92,18 @@ module.exports = function(grunt) {
                 exclude: ['.git*', '*.scss', 'node_modules'],
                 recursive: true
             },
-            prod: {
+            laravelcore: {
                 options: {
-                    src: '.',
+                    src: 'dist/',
+                    exclude: ['public', 'files', 'vendor', 'app/storage'],
+                    dest: 'ec2-user@amazon:/var/www/progress-laravel',
+                    ssh: true,
+                    rescursive: true,
+                }
+            },
+            laravelpublic: {
+                options: {
+                    src: 'dist/public/',
                     dest: 'ec2-user@amazon:/var/www/html/progress/api',
                     ssh: true,
                     rescursive: true,
@@ -40,7 +112,18 @@ module.exports = function(grunt) {
         },
     });
 
-    grunt.registerTask('default', ['watch']);
+    // grunt.registerTask('phpwatch', ['php:watch', 'watch']);
 
+    grunt.registerTask('default', ['setPHPConstant:development', 'watch:lint']);
+    // grunt.registerTask('default', ['setPHPConstant:development', 'concurrent']);
+
+    grunt.registerTask('deploy', [
+        'copy:dist',
+        'setPHPConstant:productionCore',
+        'setPHPConstant:productionPublic',
+        'setPHPConstant:productionEnv',
+        'rsync:laravelcore',
+        'rsync:laravelpublic',
+    ]);
 
 };
