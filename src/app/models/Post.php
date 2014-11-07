@@ -68,6 +68,15 @@ class Post extends \Eloquent {
         return $post;
     }
 
+    public function addComment($text, $userId) {
+        $comment = new Comment;
+        $comment->post_id = $this->id;
+        $comment->user_id = $userId;
+        $comment->text = $text;
+        $this->comments()->save($comment);
+        return $comment;
+    }
+
     public function comments() {
         return $this->hasMany('Comment');
     }

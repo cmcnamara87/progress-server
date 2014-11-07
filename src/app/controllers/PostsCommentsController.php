@@ -27,12 +27,11 @@ class PostsCommentsController extends \BaseController {
 			return Redirect::back()->withErrors($validator)->withInput();
 		}
 		$request = Request::instance();
-		$content = (array)json_decode($request->getContent());
-		$content['post_id'] = $postId;
-		$content['user_id'] = Auth::user()->id;
-		$comment = Comment::create($content);
+		$data = (array)json_decode($request->getContent());
+
+		$post = Post::find($postId);
+		$comment = $post->addComment($data['text'], Auth::user()->id);
 		return Response::json($comment);
-		// return Redirect::route('posts.index');
 	}
 
 
