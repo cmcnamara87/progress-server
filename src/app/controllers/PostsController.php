@@ -38,7 +38,6 @@ class PostsController extends \BaseController {
 		}
 
 		Post::create($data);
-
 		return Redirect::route('posts.index');
 	}
 
@@ -51,6 +50,7 @@ class PostsController extends \BaseController {
 	public function show($id)
 	{
 		$post = Post::findOrFail($id);
+		$post->load('user', 'project', 'media', 'likes', 'likes.user', 'comments', 'comments.user');
 		return Response::json($post);
 	}
 

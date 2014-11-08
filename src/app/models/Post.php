@@ -74,7 +74,47 @@ class Post extends \Eloquent {
         $comment->user_id = $userId;
         $comment->text = $text;
         $this->comments()->save($comment);
+
+
+        // Notify the post author
+        $notification = new Notification;
+        $notification->text = $comment->user->name . ' commented on your post.<br/>"' . $text . '"';
+        $notification->isread = 0;
+        $notification->user_id = $this->user->id;
+        $notification->post_id = $this->id;
+        $notification->save();
+
+        // Notify the other commenters
+        foreach($this->comments as $existingComment) {
+            if($existingComment->user->id == $comment->user->id || $existingComment->user->id == $this->user->id) {
+                continue;
+            }
+            // Let all the other comments know
+            $notification = new Notification;
+            $notification->text = $comment->user->name . ' commented on ' . $this->user->name . '\'s post.<br/>"' . $text . '"';
+            $notification->isread = 0;
+            $notification->user_id = $existingComment->user->id;
+            $notification->post_id = $this->id;
+            $notification->save();
+        }
+
         return $comment;
+    }
+    public function addLike($userId) {
+        $like = new Like;
+        $like->post_id = $this->id;
+        $like->user_id = $userId;
+        $this->likes()->save($like);
+
+        // Make the notification
+        $notification = new Notification;
+        $notification->text = $like->user->name . ' liked your post.';
+        $notification->isread = 0;
+        $notification->user_id = $this->user->id;
+        $notification->post_id = $this->id;
+        $notification->save();
+
+        return $like;
     }
 
     public function comments() {

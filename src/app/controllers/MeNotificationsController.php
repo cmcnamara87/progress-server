@@ -10,6 +10,11 @@ class MeNotificationsController extends \BaseController {
 	public function index()
 	{
 		$notifications = Notification::findUnreadForUser(Auth::user());
+
+		if($notifications->count() < 5) {
+			$readNotifications = Auth::user()->notifications()->read()->orderBy('created_at', 'desc')->take(5 - $notifications->count())->get();
+			$notifications = $notifications->merge($readNotifications);
+		}
 		return Response::json($notifications);
 	}
 
@@ -45,7 +50,13 @@ class MeNotificationsController extends \BaseController {
 	 */
 	public function update($id)
 	{
-		//
+		$request = Request::instance();
+		$data = (array)json_decode($request->getContent());
+
+		$notification = Notification::find($id);
+		$notification->isread = $data['isread'];
+		$notification->save();
+		return Response::json($notification);
 	}
 
 

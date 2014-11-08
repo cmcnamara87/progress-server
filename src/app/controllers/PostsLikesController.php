@@ -21,11 +21,8 @@ class PostsLikesController extends \BaseController {
 	 */
 	public function store($postId)
 	{
-		$like = new Like;
-		$like->post_id = $postId;
-		$like->user_id = Auth::user()->id;
-		$like->save();
-
+		$post = Post::find($postId);
+		$like = $post->addLike(Auth::user()->id);
 		return Response::json($like);
 	}
 

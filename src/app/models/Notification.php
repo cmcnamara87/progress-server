@@ -19,8 +19,17 @@ class Notification extends \Eloquent {
         return $this->belongsTo('Post');
     }
 
+    public function scopeUnread($query)
+    {
+        return $query->where('isread', '=', false);
+    }
+    public function scopeRead($query)
+    {
+        return $query->where('isread', '=', true);
+    }
+
     public static function findUnreadForUser($user) {
         // $user = User::findOrFail($userId);
-        return $user->notifications()->where('isread', '=', false)->orderBy('created_at', 'desc')->get();
+        return $user->notifications()->unread()->orderBy('created_at', 'desc')->get();
     }
 }
