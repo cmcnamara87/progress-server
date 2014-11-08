@@ -15,7 +15,7 @@ class MeNotificationsController extends \BaseController {
 			$readNotifications = Auth::user()->notifications()->read()->orderBy('created_at', 'desc')->take(5 - $notifications->count())->get();
 			$notifications = $notifications->merge($readNotifications);
 		}
-		return Response::json($notifications);
+		return Response::json($notifications, 200, [], JSON_NUMERIC_CHECK);
 	}
 
 
