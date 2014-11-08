@@ -56,7 +56,7 @@ class Post extends \Eloquent {
         $media->filename = $fileName;
 
         if (App::environment('production')) {
-            $media->url = 'http://ec2-54-206-66-123.ap-southeast-2.compute.amazonaws.com/progress/uploads/' . $fileName;
+            $media->url = 'http://getprogress.com/uploads/' . $fileName;
         }
         if (App::environment('local')) {
             $media->url = 'http://localhost:8888/files/' . $fileName;
