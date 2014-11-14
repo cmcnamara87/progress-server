@@ -1,6 +1,6 @@
 <?php
 
-define('CORE_PATH', '/..');
+define('CORE_PATH', '/../../../progress-laravel');
 
 /**
  * Laravel - A PHP Framework For Web Artisans

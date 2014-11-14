@@ -24,6 +24,10 @@ class Project extends \Eloquent {
 
     public function addProgress($userId) {
 
+        if($userId !== $this->user_id) {
+            App::abort(400, 'You are not the owner for the project.');
+        }
+
         // Get the last progress
         $lastProgress = $this->getLastProgress();
         $newProgress = new Progress;

@@ -8,8 +8,9 @@ class MeFollowingPostsController extends \BaseController {
 	 */
 	public function index()
 	{
+		$posts = Auth::user()->getFeed(); //Auth::user()->follows()->posts;
 		// echo 'hello world';/
-		$posts = Post::with('user', 'project', 'media', 'likes', 'likes.user', 'comments', 'comments.user')->orderby('created_at', 'desc')->take(10)->get();
+		// $posts = Post::with('user', 'project', 'media', 'likes', 'likes.user', 'comments', 'comments.user')->orderby('created_at', 'desc')->take(10)->get();
 		return Response::json($posts);
 	}
 

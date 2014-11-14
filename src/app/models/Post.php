@@ -14,6 +14,11 @@ class Post extends \Eloquent {
         $post->text = $text;
         $post->type = 'TEXT';
         $post->save();
+
+        // Add progress
+        $project = Project::find($projectId);
+        $project->addProgress($userId);
+
         return $post;
     }
     /**
@@ -32,6 +37,10 @@ class Post extends \Eloquent {
         $post->text = $text;
         $post->type = 'SCREENSHOT_COLLECTION';
         $post->save();
+
+        // Add progress
+        $project = Project::find($projectId);
+        $project->addProgress($userId);
 
         $img = Image::make($inputFile);
         $img->resize(1200, null, function ($constraint) {
@@ -69,38 +78,55 @@ class Post extends \Eloquent {
     }
 
     public function addComment($text, $userId) {
-        $comment = new Comment;
-        $comment->post_id = $this->id;
-        $comment->user_id = $userId;
-        $comment->text = $text;
-        $this->comments()->save($comment);
+        $newComment = new Comment;
+        $newComment->post_id = $this->id;
+        $newComment->user_id = $userId;
+        $newComment->text = $text;
+        $this->comments()->save($newComment);
 
 
-        // Notify the post author
-        $notification = new Notification;
-        $notification->text = $comment->user->name . ' commented on your post.<br/>"' . $text . '"';
-        $notification->isread = 0;
-        $notification->user_id = $this->user->id;
-        $notification->post_id = $this->id;
-        $notification->save();
+        // Not commenting on your own post
+        if($userId != $this->user_id) {
+            // Notify the post author
+            $notification = new Notification;
+            $notification->text = $newComment->user->name . ' commented on your post.<br/>"' . $text . '"';
+            $notification->isread = 0;
+            $notification->user_id = $this->user->id;
+            $notification->post_id = $this->id;
+            $notification->save();
+        }
+        
+        // Notify the other commenters (except the post author, and the commenter)
+        $userIds = array();
 
-        // Notify the other commenters
         foreach($this->comments as $existingComment) {
-            if($existingComment->user->id == $comment->user->id || $existingComment->user->id == $this->user->id) {
+            if($existingComment->user_id == $userId || $existingComment->user_id == $this->user_id) {
                 continue;
             }
+            $userIds[] = $existingComment->user->id;
+            $userIds = array_unique($userIds);
+        }
+
+        foreach($userIds as $userId) {
             // Let all the other comments know
             $notification = new Notification;
-            $notification->text = $comment->user->name . ' commented on ' . $this->user->name . '\'s post.<br/>"' . $text . '"';
+            $notification->text = $newComment->user->name . ' commented on ' . $this->user->name . '\'s post.<br/>"' . $text . '"';
             $notification->isread = 0;
-            $notification->user_id = $existingComment->user->id;
+            $notification->user_id = $userId;
             $notification->post_id = $this->id;
             $notification->save();
         }
 
-        return $comment;
+        return $newComment;
     }
     public function addLike($userId) {
+        // Ignore duplicate likes
+        $like = $this->likes()->where('user_id', '=', $userId)->first();
+        if($like) {
+            return $like;
+        }
+
+        // Make a new like
         $like = new Like;
         $like->post_id = $this->id;
         $like->user_id = $userId;

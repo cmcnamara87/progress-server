@@ -1,6 +1,6 @@
 <?php
 
-define('LARAVEL_ENV', 'local');
+define('LARAVEL_ENV', 'production');
 // changed to 'production' by gruntfile
 
 /*

@@ -1,6 +1,6 @@
 <?php
 
-define('PUBLIC_PATH', '/../public');
+define('PUBLIC_PATH', '/../../html/progress/api');
 
 return array(
 

@@ -32,6 +32,20 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 	public function notifications() {
 		return $this->hasMany('Notification');
 	}
+	public function follows() {
+	  return $this->belongsToMany('User', 'users_follows', 'user_id', 'followee_id');
+	}
+	public function followers() {
+	  return $this->belongsToMany('User', 'users_follows', 'followee_id', 'user_id');
+	}
+
+	public function getFeed() {
+		return Post::whereIn('user_id', function($query) {
+		  $query->select('followee_id')
+		        ->from('users_follows')
+		        ->where('user_id', $this->id);
+		})->orWhere('user_id', $this->id)->with('user', 'project', 'media', 'likes', 'likes.user', 'comments', 'comments.user')->orderby('created_at', 'desc')->take(10)->get();
+	}
 
 	public function getActiveProject() {
 		$progress = $this->getLastProgress();

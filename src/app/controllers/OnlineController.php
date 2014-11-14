@@ -1,9 +1,16 @@
 <?php
 
+use Illuminate\Database\Eloquent\Collection;
+
 class OnlineController extends \BaseController {
 
 	public function online() {
-		$users = User::all();
+		$users = Auth::user()->follows;
+
+		$c1 = new Collection([ Auth::user() ]);
+		unset($c1[0]->follows);
+		$users = $users->merge($c1);
+		
 		$online = array();
 		foreach($users as $user) {
 			$activeProject = $user->getActiveProject();

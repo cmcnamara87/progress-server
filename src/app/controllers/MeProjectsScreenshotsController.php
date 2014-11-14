@@ -39,6 +39,7 @@ class MeProjectsScreenshotsController extends \BaseController {
 		}
 		$post = Post::createPicturePost($data['text'], Auth::user()->id, $data['project_id'], Input::file('file'));
 		$post->load('media');
+
 		return Response::json($post);
 	}
 
