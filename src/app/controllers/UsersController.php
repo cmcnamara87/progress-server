@@ -31,6 +31,7 @@ class UsersController extends \BaseController {
 		if(!$data) {
 			$data = Input::all();
 		}
+		$data['password'] = Hash::make($data['password']);
         $newUser = User::create($data);
 
         // Make the user follow everyone
