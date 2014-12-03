@@ -9,7 +9,7 @@ class MeFollowingController extends \BaseController {
 	 */
 	public function index()
 	{
-		$users = User::all();
+		$users = Auth::user()->follows;
 		return Response::json($users);
 	}
 

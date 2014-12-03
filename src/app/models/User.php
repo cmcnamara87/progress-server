@@ -78,6 +78,9 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 		return $seconds;
 	}
 
+	public function getIsFollowing($userId) {
+		return $this->follows()->where('followee_id', '=', $userId)->count() > 0;
+	}
 	// public function getRememberToken()
 	// {
 	//     return $this->remember_token;

@@ -24,7 +24,7 @@ module.exports = function(grunt) {
             },
             productionPublic: {
                 constant    : 'PUBLIC_PATH',
-                value       : '/../../html/progress/api',
+                value       : '/../../getprogress.com/api',
                 file        : 'dist/bootstrap/paths.php'
             },
             productionEnv: {
@@ -88,7 +88,7 @@ module.exports = function(grunt) {
 
         rsync: {
             options: {
-                args: ['--verbose'],
+                args: ['--verbose', '--rsync-path=~/bin/rsync'],
                 exclude: ['.git*', '*.scss', 'node_modules'],
                 recursive: true
             },
@@ -96,7 +96,7 @@ module.exports = function(grunt) {
                 options: {
                     src: 'dist/',
                     exclude: ['public', 'files', 'vendor', 'app/storage'],
-                    dest: 'ec2-user@amazon:/var/www/progress-laravel',
+                    dest: 'cmcnamara87@160.153.56.168:/home/cmcnamara87/progress-laravel',
                     ssh: true,
                     rescursive: true,
                 }
@@ -104,7 +104,7 @@ module.exports = function(grunt) {
             laravelpublic: {
                 options: {
                     src: 'dist/public/',
-                    dest: 'ec2-user@amazon:/var/www/html/progress/api',
+                    dest: 'cmcnamara87@160.153.56.168:/home/cmcnamara87/www/getprogress.com/api',
                     ssh: true,
                     rescursive: true,
                 }

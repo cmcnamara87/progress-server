@@ -25,6 +25,22 @@ class UsersController extends \BaseController {
 		Auth::logout();
 	}
 
+	public function register() {
+		$data = Input::only(['name','username','email','password']);
+        $newUser = User::create($data);
+
+        // Make the user follow everyone
+		$users = User::all();
+		foreach($users as $user) {
+			if($user->id === $newUser->id) {
+				continue;
+			}
+			$newUser->follows()->save($user);
+			$user->follows()->save($newUser);
+		}
+        return Response::json($newUser);
+	}
+
 	/**
 	 * Display a listing of users
 	 *
@@ -62,6 +78,10 @@ class UsersController extends \BaseController {
 	public function show($id)
 	{
 		$user = User::findOrFail($id);
+		if(Auth::check()) {
+			// Set if they follow
+			$user->isFollowing = Auth::user()->getIsFollowing($user->id);
+		}
 		return Response::json($user);
 	}
 

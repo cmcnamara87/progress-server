@@ -51,7 +51,7 @@ class Post extends \Eloquent {
 
         
         if (App::environment('production')) {
-            $uploadDir = '/var/www/html/progress/uploads/';
+            $uploadDir = '/home/cmcnamara87/www/getprogress.com/uploads';
         }
         if (App::environment('local')) {
             $uploadDir = '/Users/cmcnamara87/Sites/progress/progress-server-v3/files';
