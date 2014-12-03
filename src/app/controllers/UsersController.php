@@ -13,7 +13,6 @@ class UsersController extends \BaseController {
 		if(!isset($data['password'])) {
 			$data['password'] = '';
 		}
-		$data['password'] = '';
 		if (!Auth::attempt($data, true)) {
 			App::abort(400, 'Incorrect email or password.');
 		}
@@ -43,6 +42,9 @@ class UsersController extends \BaseController {
 			$newUser->follows()->save($user);
 			$user->follows()->save($newUser);
 		}
+
+		// Login the user
+		
         return Response::json($newUser);
 	}
 
