@@ -30,7 +30,8 @@ class UsersController extends \BaseController {
 		if(!$data) {
 			$data = Input::all();
 		}
-		$data['password'] = Hash::make($data['password']);
+		$password = $data['password'];
+		$data['password'] = Hash::make($password);
         $newUser = User::create($data);
 
         // Make the user follow everyone
@@ -43,6 +44,13 @@ class UsersController extends \BaseController {
 			$user->follows()->save($newUser);
 		}
 
+		$login = array(
+			'email' => $data['email'],
+			'password' => $password
+		);
+		if (!Auth::attempt($login, true)) {
+			App::abort(400, 'Couldn\'t register.');
+		}
 		// Login the user
 		
         return Response::json($newUser);
