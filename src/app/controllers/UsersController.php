@@ -26,7 +26,11 @@ class UsersController extends \BaseController {
 	}
 
 	public function register() {
+		$request = Request::instance();
 		$data = (array)json_decode($request->getContent());
+		if(!$data) {
+			$data = Input::all();
+		}
         $newUser = User::create($data);
 
         // Make the user follow everyone
