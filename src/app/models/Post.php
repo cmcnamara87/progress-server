@@ -119,10 +119,12 @@ class Post extends \Eloquent {
 
         foreach($userIds as $userId) {
             // Let all the other comments know
+            $notifyUser = User::find($userId);
+
             $notification = new Notification;
             $notification->text = $newComment->user->name . ' commented on ' . $this->user->name . '\'s post.<br/>"' . $text . '"';
             $notification->isread = 0;
-            $notification->user_id = $userId;
+            $notification->user_id = $notifyUser->id;
             $notification->post_id = $this->id;
             $notification->save();
 
@@ -131,8 +133,8 @@ class Post extends \Eloquent {
                 'post' => $this,
                 'comment' => $newComment
             );
-            Mail::queue('emails.notifications.othercomment', $data, function($message) use ($post, $newComment) {
-                $message->to($post->user->email, $post->user->name)
+            Mail::queue('emails.notifications.othercomment', $data, function($message) use ($post, $newComment, $notifyUser) {
+                $message->to($notifyUser->user->email, $notifyUser->user->name)
                       ->subject($newComment->user->name . ' commented on ' . $post->user->name . 's post');
             });
         }
