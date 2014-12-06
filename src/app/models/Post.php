@@ -140,6 +140,13 @@ class Post extends \Eloquent {
         $notification->post_id = $this->id;
         $notification->save();
 
+        $post = $this;
+        Mail::queue('emails.notifications.like', $data, function($message) use ($post)
+        {
+            $message->to($post->user->email, $post->user->name)
+                  ->subject('Someone liked your post');
+        });
+
         return $like;
     }
 
