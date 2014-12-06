@@ -94,6 +94,16 @@ class Post extends \Eloquent {
             $notification->user_id = $this->user->id;
             $notification->post_id = $this->id;
             $notification->save();
+
+            $post = $this;
+            $data = array(
+                'post' => $this,
+                'comment' => $newComment
+            );
+            Mail::queue('emails.notifications.comment', $data, function($message) use ($post, $newComment) {
+                $message->to($post->user->email, $post->user->name)
+                      ->subject($newComment->user->name . ' commented on your post');
+            });
         }
         
         // Notify the other commenters (except the post author, and the commenter)
@@ -115,6 +125,16 @@ class Post extends \Eloquent {
             $notification->user_id = $userId;
             $notification->post_id = $this->id;
             $notification->save();
+
+            $post = $this;
+            $data = array(
+                'post' => $this,
+                'comment' => $newComment
+            );
+            Mail::queue('emails.notifications.othercomment', $data, function($message) use ($post, $newComment) {
+                $message->to($post->user->email, $post->user->name)
+                      ->subject($newComment->user->name . ' commented on ' . $post->user->name . 's post');
+            });
         }
 
         return $newComment;
@@ -145,9 +165,9 @@ class Post extends \Eloquent {
             'post' => $this,
             'like' => $like
         );
-        Mail::queue('emails.notifications.like', $data, function($message) use ($post) {
+        Mail::queue('emails.notifications.like', $data, function($message) use ($post, $like) {
             $message->to($post->user->email, $post->user->name)
-                  ->subject('Someone liked your post');
+                  ->subject($like->user->name . ' liked your post');
         });
 
         return $like;

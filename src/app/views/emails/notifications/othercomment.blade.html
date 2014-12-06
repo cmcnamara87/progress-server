@@ -4,9 +4,9 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         
         <!-- Facebook sharing information tags -->
-        <meta property="og:title" content="{{{ $like['user']['name'] }}} liked your post" />
+        <meta property="og:title" content="{{{ $comment['user']['name'] }}} commented on {{{ $post['user']['name'] }}}'s post" />
         
-        <title>{{{ $like['user']['name'] }}} liked your post</title>
+        <title>{{{ $comment['user']['name'] }}} commented on {{{ $post['user']['name'] }}}'s post</title>
         <style type="text/css">
             /* Client-specific Styles */
             #outlook a{padding:0;} /* Force Outlook to provide a "view in browser" button. */
@@ -340,7 +340,11 @@
                                                                 <!-- <h3 class="h3">Heading 3</h3> -->
                                                                 <!-- <h4 class="h4">Heading 4</h4> -->
                                                                 <img style="width:40px;height:40px;float:left;margin-right:10px;margin-bottom:10px;" src="{{{ $post['user']['picture'] }}}" alt="">
-                                                                {{{ $like['user']['name'] }}} has liked your post.
+                                                                {{{ $comment['user']['name'] }}} commented on {{{ $post['user']['name'] }}}'s post.
+
+                                                                <div>
+                                                                    {{{ $comment['text'] }}}
+                                                                </div>
                                                                 <!-- <strong>Getting started:</strong> Transactional emails serve a defined and simple purpose. They differ from traditional mass-emails because they're generally sent on a user-by-user basis, instead of large list of users, and are generally used to deliver purchase receipts, account updates, security notifications, and more.
                                                                 <br />
                                                                 <br />
