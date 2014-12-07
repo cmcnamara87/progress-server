@@ -84,6 +84,9 @@ class Post extends \Eloquent {
         $newComment->text = $text;
         $this->comments()->save($newComment);
 
+        // Get some eager lazy loading for the emails
+        $newComment->load('user');
+        $this->load('user');
 
         // Not commenting on your own post
         if($userId != $this->user_id) {
