@@ -9,7 +9,7 @@ class OnlineController extends \BaseController {
 		// Deal with the mac app dying!
 		$userAgent = $_SERVER['HTTP_USER_AGENT'];
 		if (strpos($userAgent, 'Progress') !== false) {
-    		$users = Auth::user()->follows;
+    		$users = User::all();
 
 			$c1 = new Collection([ Auth::user() ]);
 			unset($c1[0]->follows);
