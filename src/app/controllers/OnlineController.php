@@ -5,23 +5,43 @@ use Illuminate\Database\Eloquent\Collection;
 class OnlineController extends \BaseController {
 
 	public function online() {
-		$users = Auth::user()->follows;
+	
+		// Deal with the mac app dying!
+		$userAgent = $_SERVER['HTTP_USER_AGENT'];
+		if (strpos($userAgent, 'Progress') !== false) {
+    		$users = Auth::user()->follows;
 
-		$c1 = new Collection([ Auth::user() ]);
-		unset($c1[0]->follows);
-		$users = $users->merge($c1);
-		
-		$online = array();
-		foreach($users as $user) {
-			$activeProject = $user->getActiveProject();
-			if($activeProject) {
-				$user->activeProject = $activeProject;
-				$user->lastProgress = $user->getLastProgress();
-				$user->lastProgress->created = $user->lastProgress->created_at->timestamp;
-				$online[] = $user;
+			$c1 = new Collection([ Auth::user() ]);
+			unset($c1[0]->follows);
+			$users = $users->merge($c1);
+			
+			$online = array();
+			foreach($users as $user) {
+				$activeProject = $user->getActiveProject();
+				if($activeProject) {
+					$user->activeProject = $activeProject;
+					$user->lastProgress = $user->getLastProgress();
+					$user->lastProgress->created = $user->lastProgress->created_at->timestamp;
+					$online[] = $user;
+				}
+			}
+			return Response::json($online);
+		}
+
+		// For the website
+		$follows = Auth::user()->follows;
+		$onlines = array();
+
+		foreach($follows as $follow) {
+			$project = $follow->project;
+			if($project->getIsActive()) {
+				$online = new stdClass();
+				$online->project = $project;
+				$online->users = $project->getActiveUsers();
+				$onlines[] = $online;
 			}
 		}
-		return Response::json($online);
+		return Response::json($onlines);
 	}
 	/**
 	 * Display a listing of the resource.

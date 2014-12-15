@@ -27,9 +27,16 @@ $app = new Illuminate\Foundation\Application;
 |
 */
 
-$env = $app->detectEnvironment(function() use($app) {
-    return LARAVEL_ENV;
-});
+// $env = $app->detectEnvironment(function() use($app) {
+//     return LARAVEL_ENV;
+// });
+
+
+$env = $app->detectEnvironment(array(
+    'local' => array('Craigs-Air-3.gateway')
+));
+
+
 
 // $env = $app->detectEnvironment(function() use($app) {
 //     if (getenv('APP_NAME_ENV')) {

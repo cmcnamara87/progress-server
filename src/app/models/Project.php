@@ -9,6 +9,37 @@ class Project extends \Eloquent {
 		// 'title' => 'required'
 	];
 
+    public function user() {
+        return $this->belongsTo('User');
+    }
+    public function watches() {
+        return $this->hasMany('Watch');
+    }
+    public function timers() {
+        return $this->hasMany('Timer');
+    }
+    public function progress() {
+        return $this->hasMany('Progress');
+    }
+    public function posts() {
+        return $this->hasMany('Post');
+    }
+    public function getIsActive() {
+        $progress = $this->progress()->isRecent()->orderby('created_at', 'desc')->first();
+        return !!$progress;
+    }
+    public function getActiveUsers() {
+        // created at asc is beacuse of using users->unique
+        // and it returns the last instance, not the first
+        $progresses = $this->progress()->isRecent()->orderby('created_at', 'asc')->get();
+        // $users = array();
+        $users = new \Illuminate\Database\Eloquent\Collection;
+        foreach($progresses as $progress) {
+            $progress->user->onlineAt = $progress->created_at->timestamp;
+            $users->add($progress->user);
+        }
+        return $users->unique();
+    }
     public static function findForMeOrFail($id) {
 
         $project = Project::find($id);
@@ -47,19 +78,5 @@ class Project extends \Eloquent {
     public function getThisWeeksTimer() {
         return Timer::where('project_id', '=', $this->id)->where('type', '=', 'week')->where('starting', '=', Carbon::now()->startOfWeek())->first();
     }
-    public function user() {
-        return $this->belongsTo('User');
-    }
-    public function watches() {
-        return $this->hasMany('Watch');
-    }
-    public function timers() {
-        return $this->hasMany('Timer');
-    }
-    public function progress() {
-        return $this->hasMany('Progress');
-    }
-    public function posts() {
-        return $this->hasMany('Post');
-    }
+
 }
